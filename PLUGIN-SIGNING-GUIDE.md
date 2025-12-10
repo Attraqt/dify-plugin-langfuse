@@ -129,42 +129,30 @@ dify signature verify langf-plugin-pkg.signed.difypkg -p langf-plugin-kp.public.
 
 To enable third-party plugin verification, configure your Dify deployment with the public key.
 
-### For Helm Deployments
+### For Helm Deployments at https://github.com/Attraqt/ebap-argo-app
 
 Added to  `pluginDaemon`:
 
 ```yaml
 extraEnv:
    - name: FORCE_VERIFYING_SIGNATURE
-      value: "false"
+      value: "true"
    - name: THIRD_PARTY_SIGNATURE_VERIFICATION_ENABLED
       value: "true"
+   - name: THIRD_PARTY_SIGNATURE_VERIFICATION_PUBLIC_KEYS
+      value: "/app/storage/public_keys/plugin_public_key.pem"
 ```
-Added to `dify-dev`:
 
 ```yaml
 persistence:
    enabled: true
    mountPath: /app/storage
    persistentVolumeClaim:
-      storageClass: gp2
-      size: 1Gi
+      existingClaim: dify-dev-fdp-qa-plugin-daemon-pvc
 ```
 
-Update the public key at `dify-plugin-public-key-configmap.yaml`
+Update the public key at `charts/dify-pvc/init-job.yaml`
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: dify-plugin-public-key
-  namespace: ai-search
-data:
-  plugin_public_key.pem: |
-    -----BEGIN RSA PUBLIC KEY-----
-    MIICC...
-    -----END RSA PUBLIC KEY-----
-```
 
 ---
 
