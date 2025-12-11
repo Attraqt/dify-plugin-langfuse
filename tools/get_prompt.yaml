@@ -95,7 +95,7 @@ parameters:
       ja_JP: '有効にすると、プロンプトのConfigタブの変数が手動変数とマージされます。手動変数はConfig変数より優先されます。'
       zh_Hans: '如果启用，提示词Config选项卡中的变量将与手动变量合并。手动变量优先于配置变量。'
       pt_BR: 'Se ativado, as variáveis da guia Config do prompt serão mescladas com variáveis manuais. Variáveis manuais têm precedência sobre variáveis de configuração.'
-    form: form
+    form: switch
 extra:
   python:
     source: tools/get_prompt.py
