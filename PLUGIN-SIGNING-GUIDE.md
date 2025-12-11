@@ -160,14 +160,7 @@ Update the public key at `charts/dify-pvc/init-job.yaml`
 
 Now install the signed plugin through the Dify web interface:
 
-### Install
-
-1. **Navigate to Plugin Management:**
-   - Log into your Dify instance
-   - Click **Settings** → **Plugins** (or the plugin icon in the top right)
-   - Click **Install Plugin** → **Local Package File**
-
-### Upload Signed Package
+Upload Signed Package
 
 1. **Navigate to Plugin Management:**
    - Log into your Dify instance
