@@ -121,7 +121,7 @@ class DifyLangfusePluginTool(Tool):
                 response_data = valuable_res.copy()
                 response_data["processed_prompt"] = processed_prompt
                 response_data["variables_applied"] = variables is not None
-                response_data["config_variables_used"] = use_config_variables and bool(config)
+                response_data["config_variables_applied"] = use_config_variables and bool(config)
 
                 yield self.create_text_message(processed_prompt)
                 yield self.create_json_message(response_data)
