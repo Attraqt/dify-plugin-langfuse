@@ -12,33 +12,42 @@ from dify_plugin.entities.tool import ToolInvokeMessage
 class DifyLangfusePluginTool(Tool):
     """Tool to retrieve prompts from Langfuse"""
 
-    def _replace_variables(self, prompt_text: str, variables: Optional[str]) -> str:
+    def _replace_variables(self, prompt_text: str, variables: Optional[str], config: Optional[Dict[str, Any]] = None, use_config: bool = False) -> str:
         """Replace variables in prompt text with provided values
-        
+
         Args:
             prompt_text: The original prompt text containing {{variable}} patterns
             variables: JSON string containing variable names and values
-            
+            config: Config dictionary from Langfuse prompt (optional)
+            use_config: Whether to use variables from config
+
         Returns:
             str: Prompt text with variables replaced
-            
+
         Raises:
-            ValueError: If variables JSON is invalid or variable not found
+            ValueError: If variables JSON is invalid
         """
-        if not variables:
+        var_dict = {}
+
+        if use_config and config:
+            var_dict.update(config)
+
+        # manual variables (these take precedence when both are provided)
+        if variables:
+            try:
+                manual_vars = json.loads(variables)
+                if not isinstance(manual_vars, dict):
+                    raise ValueError("Variables must be a JSON object (dictionary)")
+                var_dict.update(manual_vars)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON format in variables parameter: {str(e)}")
+
+        if not var_dict:
             return prompt_text
-            
-        try:
-            # Parse JSON string to dictionary
-            var_dict = json.loads(variables)
-            if not isinstance(var_dict, dict):
-                raise ValueError("Variables must be a JSON object (dictionary)")
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON format in variables parameter: {str(e)}")
-        
+
         # Find all {{variable}} patterns in the prompt
         pattern = r'\{\{(\w+)\}\}'
-        
+
         def replace_match(match):
             var_name = match.group(1)
             if var_name in var_dict:
@@ -46,7 +55,7 @@ class DifyLangfusePluginTool(Tool):
             else:
                 # Keep the original {{variable}} if not found in provided variables
                 return match.group(0)
-        
+
         # Replace all matches
         return re.sub(pattern, replace_match, prompt_text)
 
@@ -59,6 +68,7 @@ class DifyLangfusePluginTool(Tool):
                 - version: Version (optional)
                 - label: Label (optional)
                 - variables: JSON string containing variable replacements (optional)
+                - use_config_variables: Whether to use config variables (optional)
 
         Yields:
             ToolInvokeMessage: Tool execution result
@@ -68,6 +78,7 @@ class DifyLangfusePluginTool(Tool):
         version: Optional[int] = tool_parameters.get("version")
         label: Optional[str] = tool_parameters.get("label")
         variables: Optional[str] = tool_parameters.get("variables")
+        use_config_variables: bool = tool_parameters.get("use_config_variables", False)
 
         # Version and label cannot be specified simultaneously
         if version and label:
@@ -99,15 +110,19 @@ class DifyLangfusePluginTool(Tool):
 
             # Process response
             if valuable_res["type"] == "text":
-                # Apply variable replacement if variables are provided
+                # Extract config from the response
+                config = valuable_res.get("config", {})
+
+                # Apply variable replacement if variables or config are provided
                 original_prompt = valuable_res["prompt"]
-                processed_prompt = self._replace_variables(original_prompt, variables)
-                
+                processed_prompt = self._replace_variables(original_prompt, variables, config, use_config_variables)
+
                 # Update the JSON response to include the processed prompt
                 response_data = valuable_res.copy()
                 response_data["processed_prompt"] = processed_prompt
                 response_data["variables_applied"] = variables is not None
-                
+                response_data["config_variables_applied"] = use_config_variables and bool(config)
+
                 yield self.create_text_message(processed_prompt)
                 yield self.create_json_message(response_data)
             else:

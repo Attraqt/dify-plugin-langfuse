@@ -174,4 +174,5 @@ cython_debug/
 .cursor/
 
 # mise
-.mise.local.toml
+.mise.local.toml*.private.pem
+langf-*
